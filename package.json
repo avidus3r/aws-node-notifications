@@ -1,0 +1,14 @@
+{
+  "name": "node-sandbox",
+  "dependencies": {
+    "aws-sdk": "^2.6.4",
+    "body-parser": "^1.15.2",
+    "express": "latest",
+    "gulp": "latest",
+    "gulp-nodemon": "latest",
+    "http": "latest",
+    "jade": "latest",
+    "pm2": "latest",
+    "request": "^2.75.0"
+  }
+}
