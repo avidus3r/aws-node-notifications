@@ -5,7 +5,15 @@ var http        = require('http'),
     bodyParser  = require('body-parser'),
     AWS         = require('aws-sdk'),
     request     = require('request');
-    
+
+
+AWS.config.update({region:'us-east-1'});
+
+//TODO: update endpoints and service URIs
+var endpoint = '';
+var TopicARN = '';
+
+var sns = new AWS.SNS({params: {TopicArn:TopicARN}});
 
 app.set('port', process.env.PORT || 3000);
 app.set('view engine', 'jade');
@@ -39,60 +47,32 @@ app.get('/', function(req,res){
 });
 
 app.post('/notifications', function(req,res){
-    var msg = req.body;
-    console.log(req.body);
-    var dirTxt = 'entered';
-    var deviceID = msg.notification.event.deviceId;
-    if(msg.notification.event.eventType === 'rule-leave'){
-        dirTxt = 'left';
-    }
+    var message = req.body;
 
-    var dfd = new Promise(function(fulfill, reject){
-        var endpoint = 'https://92b3312e-101a-4ca5-b8c8-8fd1c3b04b53:HbJ9HYA7kO8ShYjSV2Kj@platform.vin.li/api/v1/devices/' + deviceID + '/vehicles/_latest';
+    //publish to sns arn
+
+    sns.publish({Message: message}, function (err, data) {
+        if (err) console.log('Error: ', JSON.stringify(err));
+        console.log("success: ", JSON.stringify(data));
+    });
+
+    /*var dfd = new Promise(function(fulfill, reject){
+        var url = endpoint;
         var message = '';
-        request(endpoint, function(err, result){
+        request(url, function(err, result){
             if(err) reject(JSON.stringify(err));
             result = JSON.parse(result.body);
-            if(result.hasOwnProperty('vehicle')){
-                var vehicle = result.vehicle;
-                if(vehicle.hasOwnProperty('vin')){
-
-                    var dir = dirTxt === 'left' ? ' out of' : ' entered';
-                    message =  vehicle.vin + ' ' + vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model + ' http://lotmgmt.coxconnectedcar.com/vehicle/?vin=' + vehicle.vin + dir + ' geofence at ' + Date.now()
-                }
-            }
+            message = result.message;
             fulfill(message);
         });
     });
 
     dfd.then(function(message){
-        console.log(message);
-        AWS.config.update({region:'us-east-1'});
-        var sns = new AWS.SNS({params: {TopicArn:'arn:aws:sns:us-east-1:629760438439:vinli-geofence'}});
-
         sns.publish({Message: message}, function (err, data) {
             if (err) console.log('Error: ', JSON.stringify(err));
-
             console.log("success: ", JSON.stringify(data));
         });
-    });
-
-    var muleSloth = new Promise(function(fulfill, reject){
-       var muleEndpoint = 'http://connectcar-autonation.cloudhub.io/api/notifications';
-        request.post(muleEndpoint,{
-            json:true,
-            body:msg
-        }, function(err, result){
-            if(err) reject(JSON.stringify(err));
-            fulfill(result);
-        })
-    });
-
-    muleSloth.then(function(result){
-        res.status(200);
-        res.send(deviceID);
-        res.end();
-    });
+    });*/
 
 });
 
